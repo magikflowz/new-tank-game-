@@ -4,11 +4,29 @@ import random
 
 class screensetup:
     screen = turtle.Screen()
+    screen.title("Cup Battle")
     screen.setup(500,500)
     screen.setworldcoordinates(0,0,200.0,200.0)
     screen.tracer(0)  
     turtle.speed(0) 
     turtle.hideturtle()
+
+class Bullet:
+    def __init__(self, x, y, angle, speed):
+        self.x = x
+        self.y = y
+        self.angle = angle
+        self.speed = speed
+
+    def move(self):
+        self.x += math.cos(self.angle) * self.speed
+        self.y += math.sin(self.angle) * self.speed
+
+    def draw(self):
+        turtle.pu()
+        turtle.goto(self.x, self.y)
+        turtle.pd()
+        turtle.dot(5)  # Example representation, adjust as needed
 
 class tanks:
     def __init__(self,x,y,angle,size,v,health,color,targetx,targety,rotate):
@@ -23,6 +41,12 @@ class tanks:
         self.targety=targety
         self.rotate=rotate
 
+    def fire_bullet(self):
+        bullet_speed = 5  # Adjust as needed
+        # Create a bullet object based on tank's position and angle
+        bullet = Bullet(self.x, self.y, self.angle, bullet_speed)
+        return bullet
+    
     def draw(self):
         turtle.color(self.color)
         turtle.pu()
@@ -78,15 +102,25 @@ class tanks:
 class keyboard:
     def __init__(self,tank):
         keyboard.tank = tank
-        keyboard.end=0
-        screensetup.screen.listen() 
-        screensetup.screen.onkeypress(self.kmove, "Up") 
+        keyboard.end = False
+        screensetup.screen.listen()
+        screensetup.screen.onkeypress(self.kmove, "Up")
         screensetup.screen.onkeyrelease(self.kstop, "Up")
         screensetup.screen.onkeypress(self.kleft, "Left")
         screensetup.screen.onkeyrelease(self.kleftstop, "Left")
         screensetup.screen.onkeypress(self.kright, "Right")
         screensetup.screen.onkeyrelease(self.krightstop, "Right")
+        screensetup.screen.onkeypress(self.kfire, "space")  # Bind kfire to space bar event
         screensetup.screen.onkeypress(self.kend, "Escape")
+
+    global bullets
+
+    bullets = []
+
+    def kfire(self):
+        bullet = keyboard.tank.fire_bullet()
+        bullets.append(bullet)
+                       
     def kmove(self):  
         keyboard.tank.controlvelocity(.2)
     def kstop(self):
@@ -124,6 +158,27 @@ for i in range(numtanks):
 
 while not keyboard.end: 
     turtle.clear()
+
+    for bullet in bullets:
+        bullet.move()
+        bullet.draw()
+    
+    for bullet in bullets:
+        # Check for collisions with walls
+        if bullet.x < 0 or bullet.x > 200 or bullet.y < 0 or bullet.y > 200:
+            bullets.remove(bullet)
+            continue
+    
+    # Check for collisions with tanks
+        for tank in enemy:
+            distance = math.sqrt((bullet.x - tank.x)**2 + (bullet.y - tank.y)**2)
+            if distance < tank.size:
+                bullets.remove(bullet)
+                # Handle tank hit, e.g., reduce health
+                tank.health -= 1
+                if tank.health <= 0:
+                    enemy.remove(tank)
+                break
 
     sorted_distances = sort_tanks_by_distance(user, enemy)
 
