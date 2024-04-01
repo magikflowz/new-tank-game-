@@ -11,6 +11,78 @@ class screensetup:
     turtle.speed(0) 
     turtle.hideturtle()
 
+class Grid:
+    def __init__(self, size, cell_size):
+        self.size = size
+        self.cell_size = cell_size
+        self.grid = [[False for _ in range(size)] for _ in range(size)]  # Initialize grid with no obstacles
+        self.visible = True  # Initially, grid is visible
+        self.screen = turtle.Screen()
+        self.screen.setup(size * cell_size + 100, size * cell_size + 100)
+        self.screen.tracer(0)
+        self.pen = turtle.Turtle()
+        self.pen.penup()
+        self.pen.speed(0)
+        self.screen.onclick(self.toggle_obstacle)
+        self.screen.onkeypress(self.toggle_grid, "g")
+        self.screen.onkeypress(self.increase_size, "+")
+        self.screen.onkeypress(self.decrease_size, "-")
+        self.screen.listen()
+        self.draw()
+
+    def toggle_obstacle(self, x, y):
+        col = int((x + self.size * self.cell_size / 2) // self.cell_size)
+        row = int((-y + self.size * self.cell_size / 2) // self.cell_size)
+        if 0 <= row < self.size and 0 <= col < self.size:
+            self.grid[row][col] = not self.grid[row][col]  # Toggle obstacle presence
+            self.draw()
+
+    def toggle_grid(self):
+        self.visible = not self.visible
+        self.draw()  # Call draw to update grid visibility
+
+    def increase_size(self):
+        self.size += 1
+        self.reset_grid()
+
+    def decrease_size(self):
+        if self.size > 2:
+            self.size -= 1
+            self.reset_grid()
+
+    def reset_grid(self):
+        self.grid = [[False for _ in range(self.size)] for _ in range(self.size)]
+        self.draw()
+
+    def draw(self):
+        self.pen.clear()
+        self.pen.goto(-self.size * self.cell_size / 2, self.size * self.cell_size / 2)
+
+        if self.visible:
+            for row in range(self.size):
+                for col in range(self.size):
+                    if self.grid[row][col]:
+                        self.pen.fillcolor("black")
+                    else:
+                        self.pen.fillcolor("white")
+                    self.pen.begin_fill()
+                    for _ in range(4):
+                        self.pen.forward(self.cell_size)
+                        self.pen.right(90)
+                    self.pen.end_fill()
+                    self.pen.forward(self.cell_size)
+                self.pen.backward(self.size * self.cell_size)
+                self.pen.right(90)
+                self.pen.forward(self.cell_size)
+                self.pen.left(90)
+
+        self.screen.update()
+
+# Example usage:
+grid_size = 5  # Initial grid size
+cell_size = 20
+grid = Grid(grid_size, cell_size)
+
 class Bullet:
     def __init__(self, x, y, angle, speed):
         self.x = x
@@ -34,7 +106,7 @@ class tanks:
         self.y=y
         self.size=size
         self.angle=angle
-        self.v=v
+        self.v=v/2
         self.health=health
         self.color=color
         self.targetx=targetx
