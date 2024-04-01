@@ -1,6 +1,8 @@
 import turtle
 import math
 import random
+import os 
+import pickle
 
 class screensetup:
     screen = turtle.Screen()
@@ -18,7 +20,7 @@ class Grid:
         self.grid = [[False for _ in range(size)] for _ in range(size)]  # Initialize grid with no obstacles
         self.visible = True  # Initially, grid is visible
         self.screen = turtle.Screen()
-        self.screen.setup(size * cell_size + 100, size * cell_size + 100)
+        self.screen.setup(size * cell_size + 400, size * cell_size + 400)
         self.screen.tracer(0)
         self.pen = turtle.Turtle()
         self.pen.penup()
@@ -27,6 +29,8 @@ class Grid:
         self.screen.onkeypress(self.toggle_grid, "g")
         self.screen.onkeypress(self.increase_size, "+")
         self.screen.onkeypress(self.decrease_size, "-")
+        self.screen.onkeypress(self.save_configuration, "s")
+        self.screen.onkeypress(self.load_configuration, "l")
         self.screen.listen()
         self.draw()
 
@@ -54,6 +58,17 @@ class Grid:
         self.grid = [[False for _ in range(self.size)] for _ in range(self.size)]
         self.draw()
 
+    def save_configuration(self):
+        with open("obstacle_configuration.pickle", "wb") as f:
+            pickle.dump(self.grid, f)
+
+    def load_configuration(self):
+        if os.path.exists("obstacle_configuration.pickle"):
+            with open("obstacle_configuration.pickle", "rb") as f:
+                self.grid = pickle.load(f)
+                self.size = len(self.grid)
+                self.draw()
+
     def draw(self):
         self.pen.clear()
         self.pen.goto(-self.size * self.cell_size / 2, self.size * self.cell_size / 2)
@@ -79,9 +94,10 @@ class Grid:
         self.screen.update()
 
 # Example usage:
-grid_size = 5  # Initial grid size
+grid_size = 10  # Initial grid size
 cell_size = 20
 grid = Grid(grid_size, cell_size)
+
 
 class Bullet:
     def __init__(self, x, y, angle, speed):
